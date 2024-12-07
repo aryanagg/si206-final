@@ -20,8 +20,8 @@ if response.status_code == 200:
         for row in rows:
             columns = row.find_all('td')
             if len(columns) >= 2:
-                country = columns[0].text.strip()
-                pollution = columns[1].text.strip()
+                country = columns[1].text.strip()
+                pollution = columns[2].text.strip()
                 data.append((country, pollution))
 
         # Connect to the SQLite3 database
