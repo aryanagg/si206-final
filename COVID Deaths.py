@@ -10,7 +10,7 @@ def get_data():
         data = response.json()
         return data.get("rawData", [])
     
-db_name="final_project.db"
+db_name="project_data.db"
 def store_data(data):
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
@@ -18,6 +18,8 @@ def store_data(data):
     # Create table if it doesn't exist
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS covid_deaths (
+        latitude FLOAT,
+        longitude FLOAT,
         province_state TEXT,
         country_region TEXT,
         confirmed INTEGER,
@@ -25,20 +27,24 @@ def store_data(data):
     )
     """)
 
-    cursor.execute("SELECT province_state FROM covid_deaths")
-    existing_states = []
+    cursor.execute("SELECT latitude FROM covid_deaths")
+    existing_lats = []
     for row in cursor.fetchall():
-        existing_states.append(row[0])
+        if row[0] != "":
+            existing_lats.append(row[0])
+    print(existing_lats)
 
     count = 0
     for line in data:
         if count>=25:
             break
-        if line["Province_State"] not in existing_states:
+        if line["Lat"] not in existing_lats:
             cursor.execute("""
-            INSERT INTO covid_deaths (province_state, country_region, confirmed, deaths)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
+            VALUES (?, ?, ?, ?, ?, ?)
             """, (
+                float(line.get("Lat")),
+                float(line.get("Long_")),
                 line.get("Province_State"),
                 line.get("Country_Region"),
                 int(line.get("Confirmed", 0)),
@@ -50,7 +56,6 @@ def store_data(data):
     connection.close()
     print(f"Inserted {count} new records into the database.")
 
-# Step 4: Main Function to Orchestrate the Workflow
 def main():
     data = get_data()
     if data:
