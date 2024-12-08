@@ -10,7 +10,7 @@ def get_data():
         data = response.json()
         return data.get("rawData", [])
     
-db_name="project_data.db"
+db_name="final_project_data.db"
 def store_data(data):
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
@@ -18,6 +18,7 @@ def store_data(data):
     # Create table if it doesn't exist
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS covid_deaths (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         latitude FLOAT,
         longitude FLOAT,
         province_state TEXT,
@@ -30,21 +31,19 @@ def store_data(data):
     cursor.execute("SELECT latitude FROM covid_deaths")
     existing_lats = []
     for row in cursor.fetchall():
-        if row[0] != "":
-            existing_lats.append(row[0])
-    print(existing_lats)
+        existing_lats.append(str(row[0]))
 
     count = 0
     for line in data:
-        if count>=25:
-            break
-        if line["Lat"] not in existing_lats:
+        #if count>=25:
+        #   break
+        if line.get("Lat")!= "" and line.get("Lat") not in existing_lats:
             cursor.execute("""
             INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
             VALUES (?, ?, ?, ?, ?, ?)
             """, (
-                float(line.get("Lat")),
-                float(line.get("Long_")),
+                line.get("Lat"),
+                line.get("Long_"),
                 line.get("Province_State"),
                 line.get("Country_Region"),
                 int(line.get("Confirmed", 0)),
@@ -54,7 +53,7 @@ def store_data(data):
 
     connection.commit()
     connection.close()
-    print(f"Inserted {count} new records into the database.")
+    print(f"Inserted {count} new lines into the table.")
 
 def main():
     data = get_data()

@@ -100,24 +100,6 @@ def fetch_incremental_data():
     print(f"Fetched and stored rows {current_offset + 1} to {current_offset + limit}")
 
 
-def query_database():
-    """
-    Queries the SQLite database to verify data stored in the Country and Population tables.
-    """
-    conn = sqlite3.connect("project_data.db")
-    cursor = conn.cursor()
-
-    print("Countries:")
-    for row in cursor.execute("SELECT * FROM Country"):
-        print(row)
-
-    print("\nPopulations:")
-    for row in cursor.execute("SELECT * FROM Population"):
-        print(row)
-
-    conn.close()
-
-
 def visualize_population():
     """
     Creates a simple bar chart for the top 10 countries by population.
@@ -151,9 +133,6 @@ def visualize_population():
 if __name__ == "__main__":
     print("Fetching data incrementally...")
     fetch_incremental_data()
-
-    print("\nQuerying database...")
-    query_database()
 
     print("\nVisualizing top 10 countries by population...")
     visualize_population()
