@@ -8,7 +8,7 @@ def setup_database():
     """
     Sets up the SQLite database and creates the required tables.
     """
-    conn = sqlite3.connect("project_data.db")
+    conn = sqlite3.connect("final_project_data.db")
     cursor = conn.cursor()
 
     # Create Country and Population tables
@@ -24,7 +24,7 @@ def fetch_and_store_country_data(limit=25, offset=0):
     Fetches country data from the Country Info API and stores it in the SQLite database.
     Fetches only a limited number of rows at a time to meet project requirements.
     """
-    conn = sqlite3.connect("project_data.db")
+    conn = sqlite3.connect("final_project_data.db")
     cursor = conn.cursor()
     API_URL = "https://countryinfoapi.com/api/countries"
 
@@ -73,7 +73,7 @@ def query_database():
     """
     Queries the SQLite database to verify data stored in the Country and Population tables.
     """
-    conn = sqlite3.connect("project_data.db")
+    conn = sqlite3.connect("final_project_data.db")
     cursor = conn.cursor()
 
     print("Countries:")
@@ -86,36 +86,6 @@ def query_database():
 
     conn.close()
 
-# Step 5: Visualize top 10 countries by population
-def visualize_population():
-    """
-    Creates a simple bar chart for the top 10 countries by population.
-    """
-    conn = sqlite3.connect("project_data.db")
-    query = """
-        SELECT Country.name, Population.population
-        FROM Country
-        JOIN Population ON Country.id = Population.id
-        ORDER BY Population.population DESC
-        LIMIT 10
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-
-    if df.empty:
-        print("No data available for visualization.")
-        return
-
-    plt.figure(figsize=(12, 8))
-    plt.bar(df["name"], df["population"], color="skyblue")
-    plt.xlabel("Country")
-    plt.ylabel("Population")
-    plt.title("Top 10 Countries by Population")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig("top_10_populated_countries.png")
-    plt.show()
-
 # Main execution
 if __name__ == "__main__":
     print("Fetching data incrementally...")
@@ -123,6 +93,3 @@ if __name__ == "__main__":
 
     print("\nQuerying database...")
     query_database()
-
-    print("\nVisualizing top 10 countries by population...")
-    visualize_population()

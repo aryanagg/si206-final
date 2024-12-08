@@ -10,7 +10,7 @@ def get_data():
         data = response.json()
         return data.get("rawData", [])
     
-db_name="new7.db"
+db_name="final_project_data.db"
 def store_data(data):
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
@@ -37,7 +37,7 @@ def store_data(data):
     for line in data:
         #if count>=25:
         #   break
-        if line.get("Lat") not in existing_lats:
+        if line.get("Lat")!= "" and line.get("Lat") not in existing_lats:
             cursor.execute("""
             INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
             VALUES (?, ?, ?, ?, ?, ?)

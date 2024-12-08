@@ -25,7 +25,7 @@ if response.status_code == 200:
                 data.append((country, pollution))
 
         # Connect to the SQLite3 database
-        conn = sqlite3.connect('pollution_data.db')
+        conn = sqlite3.connect('final_project_data.db')
         cursor = conn.cursor()
 
         # Create a new table for storing pollution data
