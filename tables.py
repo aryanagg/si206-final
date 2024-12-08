@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Step 1: Set up the database
+
 def setup_database():
     """
     Sets up the SQLite database and creates the required tables.
@@ -18,7 +18,7 @@ def setup_database():
     conn.commit()
     conn.close()
 
-# Step 2: Fetch and store country data
+
 def fetch_and_store_country_data(limit=25, offset=0):
     """
     Fetches country data from the Country Info API and stores it in the SQLite database.
@@ -53,22 +53,53 @@ def fetch_and_store_country_data(limit=25, offset=0):
     conn.commit()
     conn.close()
 
-# Step 3: Incremental data fetching
+
 def fetch_incremental_data():
     """
-    Fetches data incrementally (25 rows at a time) and stores it in the database.
+    Fetches data incrementally (25 rows per run) and stores it in the database.
+    Keeps track of the current offset across runs to allow progression from the last fetch.
     """
     setup_database()  # Ensure the database and tables are set up
-    total_rows = 100  # Adjust based on expected number of rows
+
+    conn = sqlite3.connect("project_data.db")
+    cursor = conn.cursor()
+
+    # Create a table to track the current offset if it doesn't exist
+    cursor.execute("CREATE TABLE IF NOT EXISTS FetchTracker (current_offset INTEGER)")
+
+    # Get the current offset; start from 0 if no entry exists
+    cursor.execute("SELECT current_offset FROM FetchTracker LIMIT 1")
+    result = cursor.fetchone()
+    current_offset = result[0] if result else 0
+
+    # Set the limit for rows to fetch in each run
     limit = 25
-    current_offset = 0
 
-    while current_offset < total_rows:
-        fetch_and_store_country_data(limit=limit, offset=current_offset)
-        print(f"Fetched and stored rows {current_offset + 1} to {current_offset + limit}")
-        current_offset += limit
+    # Fetch data with the current offset
+    fetch_and_store_country_data(limit=limit, offset=current_offset)
 
-# Step 4: Query database to verify data
+    # Print the newly added rows for this run
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT Country.id, Country.name, Population.population FROM Country JOIN Population ON Country.id = Population.id LIMIT ? OFFSET ?", (limit, current_offset))
+    rows = cursor.fetchall()
+    print("Fetched rows:")
+    for row in rows:
+        print(dict(row))
+
+    # Update the offset in the database
+    new_offset = current_offset + limit
+    if result:
+        cursor.execute("UPDATE FetchTracker SET current_offset = ?", (new_offset,))
+    else:
+        cursor.execute("INSERT INTO FetchTracker (current_offset) VALUES (?)", (new_offset,))
+
+    conn.commit()
+    conn.close()
+
+    print(f"Fetched and stored rows {current_offset + 1} to {current_offset + limit}")
+
+
 def query_database():
     """
     Queries the SQLite database to verify data stored in the Country and Population tables.
@@ -86,7 +117,7 @@ def query_database():
 
     conn.close()
 
-# Step 5: Visualize top 10 countries by population
+
 def visualize_population():
     """
     Creates a simple bar chart for the top 10 countries by population.
@@ -116,7 +147,7 @@ def visualize_population():
     plt.savefig("top_10_populated_countries.png")
     plt.show()
 
-# Main execution
+
 if __name__ == "__main__":
     print("Fetching data incrementally...")
     fetch_incremental_data()

@@ -25,28 +25,38 @@ def fetch_and_store_country_data():
     conn = sqlite3.connect("project_data.db")
     cursor = conn.cursor()
 
+    rows_added = 0  # Counter to limit the number of rows added per execution
+    limit = 25  # Limit of rows to insert per run
+
     try:
         response = requests.get(API_URL)
         response.raise_for_status()
         data = response.json()
 
         for entry in data:
+            if rows_added >= limit:
+                break  # Stop inserting rows once the limit is reached
+
             country_id = int(entry["ccn3"]) if "ccn3" in entry and entry["ccn3"].isdigit() else None
             country_name = entry.get("name", None)
             population = entry.get("population", None)
 
-            #insert data
+            # Insert data if all required fields are valid
             if country_id and country_name and population:
                 cursor.execute("INSERT OR IGNORE INTO Country (id, name) VALUES (?, ?)", (country_id, country_name))
                 cursor.execute("INSERT OR IGNORE INTO Population (id, population) VALUES (?, ?)", (country_id, population))
+                rows_added += 1
             else:
                 print(f"Skipping invalid entry: {entry}")
 
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch country data from API: {e}")
-    
+
     conn.commit()
     conn.close()
+
+    print(f"{rows_added} rows added to the database in this run.")
+
 
 #Populate Pollution Data (Static Data for Testing)
 def populate_pollution_data():
