@@ -10,7 +10,7 @@ def get_data():
         data = response.json()
         return data.get("rawData", [])
     
-db_name="final_project_data.db"
+db_name="final_data.db"
 def store_data(data):
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
