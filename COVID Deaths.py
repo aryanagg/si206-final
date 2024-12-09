@@ -37,7 +37,7 @@ def store_data(data):
     for line in data:
         #if count>=25:
         #   break
-        if line.get("Lat")!= "" and line.get("Lat") not in existing_lats:
+        if line.get("Lat")!= "" and line.get("Long_")!="" and line.get("Lat") not in existing_lats:
             cursor.execute("""
             INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
             VALUES (?, ?, ?, ?, ?, ?)
