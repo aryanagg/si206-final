@@ -40,7 +40,7 @@ def insert_rows(data, chunk_size=25):
     if current_count < 100:
         # Insert rows in chunks of 25 until 100 rows are reached
         start_index = current_count
-        end_index = min(start_index + chunk_size, len(data), 100)
+        end_index = start_index + chunk_size
         for record in data[start_index:end_index]:
             cursor.execute("""
             INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
