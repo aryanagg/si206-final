@@ -3,14 +3,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import csv
 
-def get_data(db_path, query):
-    conn = sqlite3.connect(db_path)
+def get_data(db, query):
+    conn = sqlite3.connect(db)
     df = pd.read_sql(query, conn)
     conn.close()
     return df
 
-def write_to_csv(df, filepath):
-    with open(filepath, mode='w', newline='', encoding='utf-8') as file:
+def write_to_csv(df, filename):
+    with open(filename, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(['Country', 'Total Deaths']) 
         writer.writerows(df[['country', 'total_deaths']].values.tolist())
@@ -23,10 +23,11 @@ def create_scatter_plot(df):
     plt.xlabel('Air Pollution Level', fontsize=12)
     plt.ylabel('Number of COVID Deaths', fontsize=12)
     plt.xticks(rotation=45, fontsize=6)
+    plt.savefig("covid_deaths_vs_pollution.png")
     plt.show()
 
 def main():
-    db_path = 'final_data.db'
+    db = 'final_data.db'
     query = """
         SELECT covid_deaths.country_region AS country, 
                SUM(covid_deaths.deaths) AS total_deaths, 
@@ -36,7 +37,7 @@ def main():
         GROUP BY covid_deaths.country_region, pollution_data.pollution_2023;
     """
     
-    df = get_data(db_path, query)
+    df = get_data(db, query)
     write_to_csv(df, 'pollution_scatterplot_calculated_data.csv')
     create_scatter_plot(df)
 
