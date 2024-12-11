@@ -12,7 +12,7 @@ def get_data(db, query):
 def write_to_csv(df, filename):
     with open(filename, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        writer.writerow(['Country', 'Total Deaths']) 
+        writer.writerow(['Country', 'Total Number of COVID Deaths']) 
         writer.writerows(df[['country', 'total_deaths']].values.tolist())
 
 def create_scatter_plot(df):
