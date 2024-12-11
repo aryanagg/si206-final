@@ -1,6 +1,7 @@
 import sqlite3  # or another DB connector like psycopg2 for PostgreSQL
 import pandas as pd
 import matplotlib.pyplot as plt
+import csv
 
 # Step 1: Establish a database connection (adjust as per your DB)
 conn = sqlite3.connect('final_data.db')  # Change to your DB connection string
@@ -21,6 +22,11 @@ df = pd.read_sql(query, conn)
 # Step 4: Close the connection
 conn.close()
 
+with open('pollution_scatterplot_calculated_data.csv', mode='w', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Country', 'COVID Deaths', 'Air Pollution Level'])
+    writer.writerows(df.values.tolist()) 
+
 # Step 5: Create a scatter plot
 df_sorted = df.sort_values(by='pollution_2023')
 plt.figure(figsize=(20, 6))
@@ -31,4 +37,5 @@ plt.title('Number of COVID Deaths vs Air Pollution Level Per Country', fontsize=
 plt.xlabel('Air Pollution Level', fontsize=12)
 plt.ylabel('Number of COVID Deaths', fontsize=12)
 plt.xticks(rotation=45, fontsize=6)
+plt.savefig("covid_deaths_vs_pollution.png")
 plt.show()
