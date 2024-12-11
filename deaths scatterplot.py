@@ -1,12 +1,10 @@
-import sqlite3  # or another DB connector like psycopg2 for PostgreSQL
+import sqlite3 
 import pandas as pd
 import matplotlib.pyplot as plt
 import csv
 
-# Step 1: Establish a database connection (adjust as per your DB)
-conn = sqlite3.connect('final_data.db')  # Change to your DB connection string
+conn = sqlite3.connect('final_data.db')  
 
-# Step 2: Query the data, aggregate deaths by country and join with pollution data
 query = """
     SELECT covid_deaths.country_region AS country, 
            SUM(covid_deaths.deaths) AS total_deaths, 
@@ -16,23 +14,19 @@ query = """
     GROUP BY covid_deaths.country_region, pollution_data.pollution_2023;
 """
 
-# Step 3: Execute query and load data into a pandas DataFrame
 df = pd.read_sql(query, conn)
 
-# Step 4: Close the connection
 conn.close()
 
 with open('pollution_scatterplot_calculated_data.csv', mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
-    writer.writerow(['Country', 'COVID Deaths', 'Air Pollution Level'])
-    writer.writerows(df.values.tolist()) 
+    writer.writerow(['Country', 'Total Count of COVID Deaths']) 
+    writer.writerows(df[['country', 'total_deaths']].values.tolist()) 
 
-# Step 5: Create a scatter plot
 df_sorted = df.sort_values(by='pollution_2023')
 plt.figure(figsize=(20, 6))
 plt.scatter(df_sorted['pollution_2023'], df_sorted['total_deaths'], alpha=0.7, edgecolors='w', s=100)
 
-# Step 6: Customize the plot
 plt.title('Number of COVID Deaths vs Air Pollution Level Per Country', fontsize=14)
 plt.xlabel('Air Pollution Level', fontsize=12)
 plt.ylabel('Number of COVID Deaths', fontsize=12)
