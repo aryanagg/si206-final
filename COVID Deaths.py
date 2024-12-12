@@ -10,12 +10,17 @@ def get_data():
         data = response.json()
         return data.get("rawData", [])
     
-db_name="final_project_data.db"
-def store_data(data):
+db_name="final_data.db"
+
+def get_current_row_count(cursor):
+    cursor.execute("SELECT COUNT(*) FROM covid_deaths")
+    return cursor.fetchone()[0]
+
+def insert_rows(data, chunk_size=25):
     connection = sqlite3.connect(db_name)
     cursor = connection.cursor()
 
-    # Create table if it doesn't exist
+    # Create the table if it doesn't exist
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS covid_deaths (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,37 +33,54 @@ def store_data(data):
     )
     """)
 
-    cursor.execute("SELECT latitude FROM covid_deaths")
-    existing_lats = []
-    for row in cursor.fetchall():
-        existing_lats.append(str(row[0]))
+    # Get the current number of rows in the table
+    current_count = get_current_row_count(cursor)
 
-    count = 0
-    for line in data:
-        #if count>=25:
-        #   break
-        if line.get("Lat")!= "" and line.get("Lat") not in existing_lats:
+    # Insert data based on current count
+    if current_count < 100:
+        # Insert rows in chunks of 25 until 100 rows are reached
+        start_index = current_count
+        end_index = start_index + chunk_size
+        for record in data[start_index:end_index]:
             cursor.execute("""
             INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
             VALUES (?, ?, ?, ?, ?, ?)
             """, (
-                line.get("Lat"),
-                line.get("Long_"),
-                line.get("Province_State"),
-                line.get("Country_Region"),
-                int(line.get("Confirmed", 0)),
-                int(line.get("Deaths", 0))
+                record.get("Lat"),
+                record.get("Long_"),
+                record.get("Province_State"),
+                record.get("Country_Region"),
+                int(record.get("Confirmed", 0)),
+                int(record.get("Deaths", 0)),
             ))
-            count += 1
+        rows_inserted = end_index - start_index
+        print(f"Inserted {rows_inserted} rows (from row {start_index} to {end_index - 1}).")
+    else:
+        # Once 100 rows are reached, insert all remaining rows at once
+        remaining_data = data[current_count:]
+        for record in remaining_data:
+            cursor.execute("""
+            INSERT INTO covid_deaths (latitude, longitude, province_state, country_region, confirmed, deaths)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                record.get("Lat"),
+                record.get("Long_"),
+                record.get("Province_State"),
+                record.get("Country_Region"),
+                int(record.get("Confirmed", 0)),
+                int(record.get("Deaths", 0)),
+            ))
+        print(f"Inserted all remaining {len(remaining_data)} rows after reaching 100 rows.")
 
+    # Commit changes
     connection.commit()
     connection.close()
-    print(f"Inserted {count} new lines into the table.")
+
 
 def main():
     data = get_data()
     if data:
-        store_data(data)
+        insert_rows(data)
 
 if __name__ == "__main__":
     main()
