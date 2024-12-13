@@ -2,10 +2,7 @@ import sqlite3
 import requests
 from bs4 import BeautifulSoup
 
-def fillDatabase():
-    # URL of the website
-    url = "https://en.wikipedia.org/wiki/List_of_countries_by_air_pollution"
-
+def fillDatabase(url):
     # Send a GET request to the website
     response = requests.get(url)
 
@@ -63,7 +60,7 @@ def fillDatabase():
         print(f"Failed to fetch the webpage. Status code: {response.status_code}")
 
 def main():
-    fillDatabase()
+    fillDatabase("https://en.wikipedia.org/wiki/List_of_countries_by_air_pollution")
 
 if __name__ == "__main__":
     main()
