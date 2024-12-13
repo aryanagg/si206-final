@@ -8,7 +8,7 @@ cursor.execute('''
 CREATE TABLE IF NOT EXISTS country_and_population (
                 id INTEGER PRIMARY KEY,
                 country TEXT NOT NULL,
-                population TEXT NOT NULL
+                population INTEGER NOT NULL
             )
         ''')
 cursor.execute('''
