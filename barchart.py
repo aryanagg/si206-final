@@ -1,105 +1,78 @@
 import requests
-import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
 
 API_URL = "https://countryinfoapi.com/api/countries"
 
-def setup_database():
+# Fetches country data from the API and stores it in memory
+def fetch_country_data():
     """
-    Sets up the SQLite database and creates the required tables.
+    Fetches data from the API and returns it as a DataFrame.
     """
-    conn = sqlite3.connect("project_data.db")
-    cursor = conn.cursor()
-
-    #Creates tables
-    cursor.execute("CREATE TABLE IF NOT EXISTS Country (id INTEGER PRIMARY KEY, name TEXT)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS Population (id INTEGER PRIMARY KEY, population INTEGER, FOREIGN KEY(id) REFERENCES Country(id))")
-    cursor.execute("CREATE TABLE IF NOT EXISTS Pollution (id INTEGER PRIMARY KEY, pollution_level REAL, FOREIGN KEY(id) REFERENCES Country(id))")
-
-    conn.commit()
-    conn.close()
-
-#Stores the data from Country Info API
-def fetch_and_store_country_data():
-    conn = sqlite3.connect("project_data.db")
-    cursor = conn.cursor()
-
     try:
         response = requests.get(API_URL)
         response.raise_for_status()
         data = response.json()
 
-        for entry in data:
-            country_id = int(entry["ccn3"]) if "ccn3" in entry and entry["ccn3"].isdigit() else None
-            country_name = entry.get("name", None)
-            population = entry.get("population", None)
+        # Extract relevant data
+        country_data = [
+            {
+                "id": int(entry["ccn3"]) if "ccn3" in entry and entry["ccn3"].isdigit() else None,
+                "name": entry.get("name", None),
+                "population": entry.get("population", None)
+            }
+            for entry in data
+        ]
 
-            #insert data
-            if country_id and country_name and population:
-                cursor.execute("INSERT OR IGNORE INTO Country (id, name) VALUES (?, ?)", (country_id, country_name))
-                cursor.execute("INSERT OR IGNORE INTO Population (id, population) VALUES (?, ?)", (country_id, population))
-            else:
-                print(f"Skipping invalid entry: {entry}")
+        # Filter out invalid entries
+        country_data = [
+            entry for entry in country_data
+            if entry["id"] is not None and entry["name"] and entry["population"] is not None
+        ]
 
+        return pd.DataFrame(country_data)
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch country data from API: {e}")
-    
-    conn.commit()
-    conn.close()
+        return pd.DataFrame()
 
-#Populate Pollution Data (Static Data for Testing)
-def populate_pollution_data():
-    conn = sqlite3.connect("project_data.db")
-    cursor = conn.cursor()
+# Adds static pollution data to the DataFrame
+def add_pollution_data(country_df):
+    """
+    Adds pollution data to the DataFrame based on country ID.
+    """
+    pollution_data = {
+        586: 54.17,  # Pakistan
+        356: 41.39,  # India
+        524: 39.18,  # Nepal
+        586: 38.90,  # Pakistan (update)
+        108: 34.04,  # Burundi
+        646: 33.37,  # Rwanda
+        120: 32.58,  # Cameroon
+        368: 32.42,  # Iraq
+        68: 29.63,   # Bolivia
+        104: 28.64   # Myanmar
+    }
 
-    #Example pollution data Country ID, Pollution Level
-    pollution_data = [
-        (586, 54.17),  # Bangladesh
-        (356, 41.39),   # India
-        (524, 39.18),   # United States
-        (586, 38.90),   # Indonesia
-        (108, 34.04),   # Pakistan
-        (646, 33.37),   # South Africa
-        (120, 32.58),   # Myanmar
-        (368, 32.42),   # Kenya
-        (68, 29.63),   # South Korea
-        (104, 28.64),   # Colombia
-    ]
+    # Map pollution data to country DataFrame
+    pollution_df = pd.DataFrame(list(pollution_data.items()), columns=["id", "pollution_level"])
+    return pd.merge(country_df, pollution_df, on="id", how="inner")
 
-    for country_id, pollution_level in pollution_data:
-        cursor.execute("INSERT OR REPLACE INTO Pollution (id, pollution_level) VALUES (?, ?)", 
-                       (country_id, pollution_level))
-
-    conn.commit()
-    conn.close()
-
-#Create Bar Chart for Top 10 Most Polluted Countries
-def create_pollution_bar_chart():
+# Create Bar Chart for Top 10 Most Polluted Countries
+def create_pollution_bar_chart(pollution_df):
     """
     Creates a bar chart of the top 10 most polluted countries using Matplotlib.
     """
-    conn = sqlite3.connect("project_data.db")
-    
-    # Query to fetch data
-    query = """
-        SELECT Country.name, Pollution.pollution_level
-        FROM Pollution
-        JOIN Country ON Pollution.id = Country.id
-        ORDER BY Pollution.pollution_level DESC
-        LIMIT 10
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
+    # Sort by pollution level and select top 10
+    top_polluted = pollution_df.sort_values(by="pollution_level", ascending=False).head(10)
 
     # Check if data exists
-    if df.empty:
+    if top_polluted.empty:
         print("No data available for visualization.")
         return
 
     # Create the bar chart
     plt.figure(figsize=(12, 8))
-    plt.bar(df["name"], df["pollution_level"], color="skyblue")
+    plt.bar(top_polluted["name"], top_polluted["pollution_level"], color="skyblue")
     plt.xlabel("Country")
     plt.ylabel("Pollution Level (µg/m³)")
     plt.title("Top 10 Most Polluted Countries")
@@ -110,14 +83,14 @@ def create_pollution_bar_chart():
 
 # Main Execution
 if __name__ == "__main__":
-    print("Setting up database...")
-    setup_database()
-    
-    print("Fetching and storing country data...")
-    fetch_and_store_country_data()
-    
-    print("Populating pollution data...")
-    populate_pollution_data()
-    
-    print("Creating bar chart...")
-    create_pollution_bar_chart()
+    print("Fetching country data...")
+    country_df = fetch_country_data()
+
+    if not country_df.empty:
+        print("Adding pollution data...")
+        pollution_df = add_pollution_data(country_df)
+
+        print("Creating bar chart...")
+        create_pollution_bar_chart(pollution_df)
+    else:
+        print("No country data available.")
