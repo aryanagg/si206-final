@@ -33,7 +33,7 @@ if response.status_code == 200:
             CREATE TABLE IF NOT EXISTS pollution_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 country TEXT NOT NULL,
-                pollution_2023 TEXT NOT NULL
+                pollution_2023 FLOAT NOT NULL
             )
         ''')
 
