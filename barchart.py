@@ -12,7 +12,7 @@ def get_data(db, query):
 # Create Bar Chart for Top 10 Most Polluted Countries
 def create_pollution_bar_chart(df):
     plt.figure(figsize=(12, 8))
-    plt.bar(df['country'], df['pollution_2023'], color="skyblue")
+    plt.bar(df['country'], df['pollution_2023'], color="green")
     plt.xlabel("Country")
     plt.ylabel("Air Pollution Level (µg/m³)")
     plt.title("Top 10 Most Polluted Countries")
