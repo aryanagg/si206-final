@@ -22,7 +22,6 @@ def setup_database():
 def fetch_and_store_country_data(limit=25, offset=0):
     """
     Fetches country data from the Country Info API and stores it in the SQLite database.
-    Fetches only a limited number of rows at a time to meet project requirements.
     """
     conn = sqlite3.connect("final_data.db")
     cursor = conn.cursor()
@@ -59,7 +58,7 @@ def fetch_incremental_data():
     Fetches data incrementally (25 rows per run) and stores it in the database.
     Keeps track of the current offset across runs to allow progression from the last fetch.
     """
-    setup_database()  # Ensure the database and tables are set up
+    setup_database()  
 
     conn = sqlite3.connect("final_data.db")
     cursor = conn.cursor()
